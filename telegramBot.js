@@ -7,7 +7,9 @@ const botToken = process.env.BOT_TOKEN;
 const apiKey = process.env.WEATHER_API;
 const port = process.env.PORT || 3000;
 const bot = new TelegramBot(botToken);
-const HEROKU_URL = "https://telegram-weather-bot-41bc23e310cb.herokuapp.com/";
+
+// Store the message counts for each user
+const messageCounts = {};
 
 const app = express();
 app.use(express.json());
@@ -18,7 +20,7 @@ app.post(`/bot${botToken}`, (req, res) => {
 });
 
 app.listen(port, () => {
-  bot.setWebHook(`${HEROKU_URL}bot${botToken}`);
+  bot.setWebHook(`${process.env.HEROKU_URL}/bot${botToken}`);
   console.log(`Telegram bot is running on port ${port}`);
 });
 
@@ -58,4 +60,43 @@ bot.onText(/\/weather(.+)/, async (msg, match) => {
 bot.onText(/\/getchatid/, (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, `Your chat ID: ${chatId}`);
+});
+
+bot.onText(/\/getrank/, (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+
+  if (!messageCounts[chatId] || !messageCounts[chatId][userId]) {
+    bot.sendMessage(chatId, "You haven't sent any messages in this chat yet.");
+    return;
+  }
+
+  // Get the rankings based on message counts
+  const rankings = Object.entries(messageCounts[chatId])
+    .sort((a, b) => b[1] - a[1]) // Sort in descending order
+    .map(([userId, count], index) => `${index + 1}. User ${userId}: ${count} messages`);
+
+  // Find the user's rank
+  const userRank = rankings.findIndex(([userId]) => userId === String(userId));
+
+  // Create the ranking message
+  const rankingMessage = rankings.length > 0
+    ? `Your rank in this chat is ${userRank + 1} out of ${rankings.length} users.\n\nMessage Rankings:\n${rankings.join("\n")}`
+    : "No messages sent yet.";
+
+  bot.sendMessage(chatId, rankingMessage);
+});
+
+bot.on("message", (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+
+  // Increase the message count for the user in the chat
+  if (!messageCounts[chatId]) {
+    messageCounts[chatId] = {};
+  }
+  if (!messageCounts[chatId][userId]) {
+    messageCounts[chatId][userId] = 0;
+  }
+  messageCounts[chatId][userId] += 1;
 });
