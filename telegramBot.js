@@ -58,7 +58,6 @@ bot.onText(/\/start/, (msg) => {
 });
 
 
-// Function to retrieve the chat ID
 const getChatId = async () => {
   try {
     const updates = await bot.getUpdates();
