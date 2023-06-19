@@ -75,7 +75,14 @@ bot.onText(/\/getrank/, (msg) => {
   // Get the rankings based on message counts
   const rankings = Object.entries(messageCounts[chatId])
     .sort((a, b) => b[1] - a[1]) // Sort in descending order
-    .map(([userId, count], index) => `${index + 1}. User ${userId}: ${count} messages`);
+    .map(([userId, count], index) => {
+      const user = bot.getUserProfilePhotos(userId).then(userProfilePhotos => {
+        const firstName = userProfilePhotos.photos[0][0].first_name;
+        const lastName = userProfilePhotos.photos[0][0].last_name;
+        return `${index + 1}. ${firstName} ${lastName}: ${count} messages`;
+      });
+      return user;
+    });
 
   // Find the user's rank
   const userRank = rankings.findIndex(([userId]) => userId === String(userId));
