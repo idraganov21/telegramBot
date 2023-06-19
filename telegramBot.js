@@ -6,31 +6,30 @@ const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
 const apiKey = process.env.WEATHER_API;
 
-// Handle incoming messages
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const messageText = msg.text;
 
-  if (messageText.toLowerCase() === "/weather") {
+  if (messageText.toLowerCase().startsWith("/weather")) {
     try {
-      const varnaResponse = await axios.get(
-        `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=varna`
+      // Extract the city from the command message
+      const commandParts = messageText.split(" ");
+      const city = commandParts[1];
+
+      if (!city) {
+        bot.sendMessage(chatId, "Please specify a city after the /weather command. Example: /weather Prague");
+        return;
+      }
+
+      const response = await axios.get(
+        `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${encodeURIComponent(city)}`
       );
 
-      const sofiaResponse = await axios.get(
-        `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=sofia`
-      );
+      const weatherData = response.data;
+      const weatherDescription = weatherData.current.condition.text;
+      const temperature = weatherData.current.temp_c;
 
-      const varnaData = varnaResponse.data;
-      const sofiaData = sofiaResponse.data;
-
-      const varnaWeatherDescription = varnaData.current.condition.text;
-      const varnaTemperature = varnaData.current.temp_c;
-
-      const sofiaWeatherDescription = sofiaData.current.condition.text;
-      const sofiaTemperature = sofiaData.current.temp_c;
-
-      const weatherMessage = `The weather in Varna is:\nDescription: ${varnaWeatherDescription}\nTemperature: ${varnaTemperature}°C\n\nThe weather in Sofia is:\nDescription: ${sofiaWeatherDescription}\nTemperature: ${sofiaTemperature}°C`;
+      const weatherMessage = `Weather in ${city}:\nDescription: ${weatherDescription}\nTemperature: ${temperature}°C`;
 
       bot.sendMessage(chatId, weatherMessage);
     } catch (error) {
