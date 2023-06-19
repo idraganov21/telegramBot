@@ -63,7 +63,7 @@ bot.onText(/\/getchatid/, (msg) => {
   bot.sendMessage(chatId, `Your chat ID: ${chatId}`);
 });
 
-bot.onText(/\/getrank/, (msg) => {
+bot.onText(/\/getrank/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
 
@@ -73,19 +73,17 @@ bot.onText(/\/getrank/, (msg) => {
   }
 
   // Get the rankings based on message counts
-  const rankings = Object.entries(messageCounts[chatId])
+  const rankings = await Promise.all(Object.entries(messageCounts[chatId])
     .sort((a, b) => b[1] - a[1]) // Sort in descending order
-    .map(([userId, count], index) => {
-      const user = bot.getUserProfilePhotos(userId).then(userProfilePhotos => {
-        const firstName = userProfilePhotos.photos[0][0].first_name;
-        const lastName = userProfilePhotos.photos[0][0].last_name;
-        return `${index + 1}. ${firstName} ${lastName}: ${count} messages`;
-      });
-      return user;
-    });
+    .map(async ([userId, count], index) => {
+      const userProfilePhotos = await bot.getUserProfilePhotos(userId);
+      const firstName = userProfilePhotos.photos[0][0].first_name;
+      const lastName = userProfilePhotos.photos[0][0].last_name;
+      return `${index + 1}. ${firstName} ${lastName}: ${count} messages`;
+    }));
 
   // Find the user's rank
-  const userRank = rankings.findIndex(([userId]) => userId === String(userId));
+  const userRank = rankings.findIndex((rank) => rank.startsWith(`${userId}.`));
 
   // Create the ranking message
   const rankingMessage = rankings.length > 0
