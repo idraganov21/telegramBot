@@ -2,9 +2,11 @@ const TelegramBot = require("node-telegram-bot-api");
 const axios = require("axios");
 require('dotenv').config();
 
-const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
-
+const botToken = process.env.BOT_TOKEN;
 const apiKey = process.env.WEATHER_API;
+const port = process.env.PORT || 3000;
+
+const bot = new TelegramBot(botToken, { polling: true });
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -49,7 +51,6 @@ bot.on("message", async (msg) => {
   }
 });
 
-// Start the bot
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const welcomeMessage = "Welcome to your Telegram bot!";
@@ -57,20 +58,16 @@ bot.onText(/\/start/, (msg) => {
   bot.sendMessage(chatId, welcomeMessage);
 });
 
-
-const getChatId = async () => {
-  try {
-    const updates = await bot.getUpdates();
-    if (updates.length > 0) {
-      const chatId = updates[0].message.chat.id;
-      return chatId;
-    } else {
-      throw new Error("No updates found. Send a message to your bot first.");
-    }
-  } catch (error) {
-    throw new Error("Error retrieving chat ID:", error);
-  }
+const startBot = () => {
+  bot.getUpdates({ limit: 1 })
+    .then(() => {
+      bot.startPolling();
+      console.log("Telegram bot is running...");
+    })
+    .catch((error) => {
+      console.error("Failed to start the bot:", error);
+      process.exit(1);
+    });
 };
 
-// Run the bot
-console.log("Telegram bot is running...");
+startBot();
