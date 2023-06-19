@@ -7,6 +7,7 @@ const botToken = process.env.BOT_TOKEN;
 const apiKey = process.env.WEATHER_API;
 const port = process.env.PORT || 3000;
 const bot = new TelegramBot(botToken);
+const HEROKU_URL = "https://telegram-weather-bot-41bc23e310cb.herokuapp.com/";
 
 const app = express();
 app.use(express.json());
@@ -17,7 +18,7 @@ app.post(`/bot${botToken}`, (req, res) => {
 });
 
 app.listen(port, () => {
-  bot.setWebHook(`${process.env.HEROKU_URL}/bot${botToken}`);
+  bot.setWebHook(`${HEROKU_URL}/bot${botToken}`);
   console.log(`Telegram bot is running on port ${port}`);
 });
 
