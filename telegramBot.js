@@ -20,7 +20,7 @@ app.post(`/bot${botToken}`, (req, res) => {
 });
 
 app.listen(port, () => {
-  bot.setWebHook(`${process.env.HEROKU_URL}/bot${botToken}`);
+  bot.setWebHook(`${process.env.HEROKU_URL}bot${botToken}`);
   console.log(`Telegram bot is running on port ${port}`);
 });
 
